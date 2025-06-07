@@ -78,7 +78,7 @@ export class ProductsController {
     return this.productsService.findAll();
   }
 
-  @Get('products/:countryCode')
+  @Get(':countryCode')
   @ApiOperation({
     summary: 'Get all products by country code',
     description: 'Retrieve a list of all products by country code',

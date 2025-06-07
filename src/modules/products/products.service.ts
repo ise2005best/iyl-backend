@@ -146,6 +146,7 @@ export class ProductsService {
     try {
       const products = await this.productsRepository
         .createQueryBuilder('product')
+        .leftJoinAndSelect('product.media', 'media')
         .leftJoinAndSelect('product.contextualPricing', 'contextualPrice')
         .where('contextualPrice.country = :country', { country })
         .getMany();
