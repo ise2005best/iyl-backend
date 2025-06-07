@@ -5,13 +5,22 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  const allowedOrigins: string[] = [
+    'http://localhost:3000',
+    'https://iylmibs.com', // production url
+    'https://iylmibs.vercel.app', // staging url
+  ];
+
   app.enableCors({
-    origin: [
-      'http://localhost:3000',
-      'https://iylmibs.com', // production url
-      'iylmibs.vercel.app', // staging url
-    ],
+    origin: allowedOrigins,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
+
+  if (process.env.NODE_ENV === 'production') {
+    allowedOrigins.push('https://iyl-backend.onrender.com');
+  }
 
   const config = new DocumentBuilder()
     .setTitle('IYL BACKEND API')
