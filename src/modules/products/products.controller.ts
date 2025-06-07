@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, HttpStatus, Get, Param } from '@nestjs/common';
 import {
   ApiOperation,
   ApiResponse,
@@ -10,6 +10,7 @@ import { ProductsService } from './products.service';
 import { Product } from './entities/product.entity';
 import { ProductResponseDto } from './dtos/product-response.dto';
 import { CreateProductDto } from './dtos/product.dto';
+import { CountryCode } from './entities/contextual-price.entity';
 
 @Controller('products')
 export class ProductsController {
@@ -61,5 +62,49 @@ export class ProductsController {
   })
   async create(@Body() createProductDto: CreateProductDto): Promise<Product> {
     return this.productsService.create(createProductDto);
+  }
+
+  @Get()
+  @ApiOperation({
+    summary: 'Get all products',
+    description: 'Retrieve a list of all available products',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of products retrieved successfully',
+    type: [Product],
+  })
+  async findAll(): Promise<Product[]> {
+    return this.productsService.findAll();
+  }
+
+  @Get('products/:countryCode')
+  @ApiOperation({
+    summary: 'Get all products by country code',
+    description: 'Retrieve a list of all products by country code',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of products retrieved successfully',
+    type: [Product],
+  })
+  async getProductsByCountry(
+    @Param('countryCode') countryCode: CountryCode,
+  ): Promise<Product[]> {
+    return this.productsService.getProductsByCountry(countryCode);
+  }
+
+  @Get(':id')
+  @ApiOperation({
+    summary: 'Get product by ID',
+    description: 'Retrieve a product by its unique identifier',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Product retrieved successfully',
+    type: Product,
+  })
+  async findOne(@Param('id') id: string): Promise<Product> {
+    return this.productsService.findOne(id);
   }
 }

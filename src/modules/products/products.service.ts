@@ -5,7 +5,10 @@ import { Product } from './entities/product.entity';
 import { ProductVariant } from './entities/product-variant.entity';
 import { ProductMedia } from './entities/product-media.entity';
 import { ProductMetafield } from './entities/product-metafield.entity';
-import { ContextualPrice } from './entities/contextual-price.entity';
+import {
+  ContextualPrice,
+  CountryCode,
+} from './entities/contextual-price.entity';
 import { CreateProductDto } from './dtos/product.dto';
 
 @Injectable()
@@ -103,6 +106,63 @@ export class ProductsService {
       return completeProduct;
     } catch (error) {
       this.logger.error('Failed to create product', error);
+      throw error;
+    }
+  }
+
+  async findAll(): Promise<Product[]> {
+    try {
+      const products = await this.productsRepository.find({
+        relations: ['variants', 'media', 'metafields', 'contextualPricing'],
+      });
+      this.logger.log(`Found ${products.length} products`);
+      return products;
+    } catch (error) {
+      this.logger.error('Failed to fetch products', error);
+      throw error;
+    }
+  }
+
+  async findOne(id: string): Promise<Product> {
+    try {
+      const product = await this.productsRepository.findOne({
+        where: { id },
+        relations: ['variants', 'media', 'metafields', 'contextualPricing'],
+      });
+
+      if (!product) {
+        throw new NotFoundException(`Product with ID ${id} not found`);
+      }
+
+      this.logger.log(`Found product: ${product.title}`);
+      return product;
+    } catch (error) {
+      this.logger.error(`Failed to fetch product with ID ${id}`, error);
+      throw error;
+    }
+  }
+
+  async getProductsByCountry(country: CountryCode): Promise<Product[]> {
+    try {
+      const products = await this.productsRepository
+        .createQueryBuilder('product')
+        .leftJoinAndSelect('product.contextualPricing', 'contextualPrice')
+        .where('contextualPrice.country = :country', { country })
+        .getMany();
+
+      if (!products.length) {
+        throw new NotFoundException(`No products found for country ${country}`);
+      }
+
+      this.logger.log(
+        `Found ${products.length} products for country ${country}`,
+      );
+      return products;
+    } catch (error) {
+      this.logger.error(
+        `Failed to fetch products for country ${country}`,
+        error,
+      );
       throw error;
     }
   }
