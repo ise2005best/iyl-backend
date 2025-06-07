@@ -11,6 +11,7 @@ import { Product } from './entities/product.entity';
 import { ProductResponseDto } from './dtos/product-response.dto';
 import { CreateProductDto } from './dtos/product.dto';
 import { CountryCode } from './entities/contextual-price.entity';
+import { ProductMetafield } from './entities';
 
 @Controller('products')
 export class ProductsController {
@@ -106,5 +107,21 @@ export class ProductsController {
   })
   async findOne(@Param('id') id: string): Promise<Product> {
     return this.productsService.findOne(id);
+  }
+
+  @Post('/product-metafield')
+  @ApiOperation({
+    summary: 'Create a product metafield',
+    description: 'Add a metafield to an existing product',
+  })
+  @ApiBody({
+    type: ProductMetafield,
+    description: 'Metafield data to be added to the product',
+  })
+  async addProductMetafield(
+    @Param('productId') productId: string,
+    @Body() metafield: ProductMetafield,
+  ): Promise<ProductMetafield> {
+    return this.productsService.addProductMetafield(productId, metafield);
   }
 }

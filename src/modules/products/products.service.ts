@@ -167,4 +167,34 @@ export class ProductsService {
       throw error;
     }
   }
+
+  async addProductMetafield(
+    productId: string,
+    metafield: ProductMetafield,
+  ): Promise<ProductMetafield> {
+    try {
+      // find product
+      const product = await this.productsRepository.findOne({
+        where: { id: productId },
+      });
+
+      if (!product) {
+        throw new NotFoundException(`Product with ID ${productId} not found`);
+      }
+
+      // create product metafield
+      const newMetafield = this.metafieldsRepository.create({
+        ...metafield,
+        productId: product.id,
+      });
+
+      return await this.metafieldsRepository.save(newMetafield);
+    } catch (error) {
+      this.logger.error(
+        `Failed to add metafield to product with ID ${productId}`,
+        error,
+      );
+      throw error;
+    }
+  }
 }
