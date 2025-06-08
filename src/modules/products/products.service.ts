@@ -199,4 +199,38 @@ export class ProductsService {
       throw error;
     }
   }
+
+  async findOneProductByCountryCode(
+    productId: string,
+    countryCode: CountryCode,
+  ): Promise<Product> {
+    try {
+      const product = await this.productsRepository
+        .createQueryBuilder('product')
+        .leftJoinAndSelect('product.media', 'media')
+        .leftJoinAndSelect('product.contextualPricing', 'contextualPrice')
+        .leftJoinAndSelect('product.variants', 'variant')
+        .leftJoinAndSelect('product.metafields', 'metafield')
+        .where('product.id = :productId', { productId })
+        .andWhere('contextualPrice.country = :countryCode', { countryCode })
+        .getOne();
+
+      if (!product) {
+        throw new NotFoundException(
+          `Product with ID ${productId} not found for country ${countryCode}`,
+        );
+      }
+
+      this.logger.log(
+        `Found product for country ${countryCode}: ${product.title}`,
+      );
+      return product;
+    } catch (error) {
+      this.logger.error(
+        `Failed to fetch product with ID ${productId} for country ${countryCode}`,
+        error,
+      );
+      throw error;
+    }
+  }
 }

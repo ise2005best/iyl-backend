@@ -128,4 +128,21 @@ export class ProductsController {
     console.log(productId, metafield);
     return this.productsService.addProductMetafield(productId, metafield);
   }
+
+  @Get(':id/country/:countryCode')
+  @ApiOperation({
+    summary: 'Get product by ID and country code',
+    description: 'Retrieve a product by its unique identifier and country code',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Product retrieved successfully',
+    type: Product,
+  })
+  async findOneByCountryCode(
+    @Param('id') id: string,
+    @Param('countryCode') countryCode: CountryCode,
+  ): Promise<Product> {
+    return this.productsService.findOneProductByCountryCode(id, countryCode);
+  }
 }
