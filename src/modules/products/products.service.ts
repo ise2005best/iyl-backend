@@ -10,6 +10,7 @@ import {
   CountryCode,
 } from './entities/contextual-price.entity';
 import { CreateProductDto } from './dtos/product.dto';
+import { ProductMetafieldDto } from './dtos/product-response.dto';
 
 @Injectable()
 export class ProductsService {
@@ -170,7 +171,7 @@ export class ProductsService {
 
   async addProductMetafield(
     productId: string,
-    metafield: ProductMetafield,
+    metafield: ProductMetafieldDto,
   ): Promise<ProductMetafield> {
     try {
       // find product
@@ -184,8 +185,9 @@ export class ProductsService {
 
       // create product metafield
       const newMetafield = this.metafieldsRepository.create({
-        ...metafield,
-        productId: product.id,
+        key: metafield.key,
+        value: metafield.value,
+        productId: productId,
       });
 
       return await this.metafieldsRepository.save(newMetafield);

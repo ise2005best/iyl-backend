@@ -8,7 +8,10 @@ import {
 } from '@nestjs/swagger';
 import { ProductsService } from './products.service';
 import { Product } from './entities/product.entity';
-import { ProductResponseDto } from './dtos/product-response.dto';
+import {
+  ProductMetafieldDto,
+  ProductResponseDto,
+} from './dtos/product-response.dto';
 import { CreateProductDto } from './dtos/product.dto';
 import { CountryCode } from './entities/contextual-price.entity';
 import { ProductMetafield } from './entities';
@@ -109,19 +112,20 @@ export class ProductsController {
     return this.productsService.findOne(id);
   }
 
-  @Post('/product-metafield')
+  @Post('/product-metafield/:productId')
   @ApiOperation({
     summary: 'Create a product metafield',
     description: 'Add a metafield to an existing product',
   })
   @ApiBody({
-    type: ProductMetafield,
+    type: ProductMetafieldDto,
     description: 'Metafield data to be added to the product',
   })
   async addProductMetafield(
     @Param('productId') productId: string,
     @Body() metafield: ProductMetafield,
   ): Promise<ProductMetafield> {
+    console.log(productId, metafield);
     return this.productsService.addProductMetafield(productId, metafield);
   }
 }
