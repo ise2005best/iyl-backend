@@ -1,5 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+interface ShippingMethod {
+  name: string;
+  currency: string;
+  cost: number;
+  description?: string;
+  estimatedDelivery: string;
+}
+
 export class MoneyDto {
   @ApiProperty({
     example: 5000,
@@ -24,17 +32,16 @@ export class TaxBreakdownDto {
 }
 
 export class ShippingOptionsDto {
-  @ApiProperty({ example: 'standard' })
-  method: string;
+  @ApiProperty({ example: 'Within Lagos' })
+  zone: string;
 
   @ApiProperty({ example: 2000 })
-  cost: number;
+  zoneName: string;
 
-  @ApiProperty({ example: 'NGN' })
-  currency: string;
+  @ApiProperty({ example: 'states in nigera' })
+  states: string[];
 
-  @ApiProperty({ example: 'Standard delivery within Lagos' })
-  description: string;
+  shippingMethod: ShippingMethod;
 }
 
 export class OrderTotalDto {
@@ -66,12 +73,4 @@ export class CheckoutCalculateResponseDto {
     type: [ShippingOptionsDto],
   })
   shippingOptions: ShippingOptionsDto[];
-
-  @ApiProperty({
-    type: OrderTotalDto,
-  })
-  totals: OrderTotalDto;
-
-  @ApiProperty({ example: 'within_lagos' })
-  zone: string;
 }

@@ -6,6 +6,7 @@ interface ShippingMethod {
   name: string;
   currency: string;
   cost: number;
+  description?: string;
   estimatedDelivery: string;
 }
 

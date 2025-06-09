@@ -27,7 +27,7 @@ export class ProductVariant {
     example: 123,
   })
   @PrimaryGeneratedColumn()
-  id: string;
+  id: number;
 
   @ApiProperty({
     description: 'Size of the product variant',
