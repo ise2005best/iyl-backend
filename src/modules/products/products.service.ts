@@ -236,6 +236,7 @@ export class ProductsService {
     } else {
       countryCode = { country: 'NG' };
     }
+    console.log(countryCode.country);
     try {
       const product = await this.productsRepository
         .createQueryBuilder('product')
@@ -244,7 +245,9 @@ export class ProductsService {
         .leftJoinAndSelect('product.variants', 'variant')
         .leftJoinAndSelect('product.metafields', 'metafield')
         .where('product.id = :productId', { productId })
-        .andWhere('contextualPrice.country = :countryCode', { countryCode })
+        .andWhere('contextualPrice.country = :country', {
+          country: countryCode.country,
+        })
         .getOne();
 
       if (!product) {
