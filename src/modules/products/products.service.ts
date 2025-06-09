@@ -222,8 +222,20 @@ export class ProductsService {
 
   async findOneProductByCountryCode(
     productId: string,
-    countryCode: CountryCode,
+    country: CountryCode,
   ): Promise<Product> {
+    let countryCode: ShippingCode;
+    const usdZoneCountries =
+      this.shippingService.getCountriesInZone('international_usd');
+    const gbpZoneCountries =
+      this.shippingService.getCountriesInZone('international_gbp');
+    if (usdZoneCountries.includes(country)) {
+      countryCode = { country: 'US' };
+    } else if (gbpZoneCountries.includes(country)) {
+      countryCode = { country: 'GB' };
+    } else {
+      countryCode = { country: 'NG' };
+    }
     try {
       const product = await this.productsRepository
         .createQueryBuilder('product')
@@ -237,17 +249,15 @@ export class ProductsService {
 
       if (!product) {
         throw new NotFoundException(
-          `Product with ID ${productId} not found for country ${countryCode}`,
+          `Product with ID ${productId} not found for country ${country}`,
         );
       }
 
-      this.logger.log(
-        `Found product for country ${countryCode}: ${product.title}`,
-      );
+      this.logger.log(`Found product for country ${country}: ${product.title}`);
       return product;
     } catch (error) {
       this.logger.error(
-        `Failed to fetch product with ID ${productId} for country ${countryCode}`,
+        `Failed to fetch product with ID ${productId} for country ${country}`,
         error,
       );
       throw error;
