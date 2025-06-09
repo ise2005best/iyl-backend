@@ -11,6 +11,11 @@ import {
 } from './entities/contextual-price.entity';
 import { CreateProductDto } from './dtos/product.dto';
 import { ProductMetafieldDto } from './dtos/product-response.dto';
+import { ShippingService } from '../shipping/shipping.service';
+
+interface ShippingCode {
+  country: string;
+}
 
 @Injectable()
 export class ProductsService {
@@ -27,6 +32,7 @@ export class ProductsService {
     private metafieldsRepository: Repository<ProductMetafield>,
     @InjectRepository(ContextualPrice)
     private contextualPricesRepository: Repository<ContextualPrice>,
+    private shippingService: ShippingService,
   ) {}
 
   async create(createProductDto: CreateProductDto): Promise<Product> {
@@ -144,12 +150,26 @@ export class ProductsService {
   }
 
   async getProductsByCountry(country: CountryCode): Promise<Product[]> {
+    let countryCode: ShippingCode;
+    const usdZoneCountries =
+      this.shippingService.getCountriesInZone('international_usd');
+    const gbpZoneCountries =
+      this.shippingService.getCountriesInZone('international_gbp');
+    if (usdZoneCountries.includes(country)) {
+      countryCode = { country: 'US' };
+    } else if (gbpZoneCountries.includes(country)) {
+      countryCode = { country: 'GB' };
+    } else {
+      countryCode = { country: 'NG' };
+    }
     try {
       const products = await this.productsRepository
         .createQueryBuilder('product')
         .leftJoinAndSelect('product.media', 'media')
         .leftJoinAndSelect('product.contextualPricing', 'contextualPrice')
-        .where('contextualPrice.country = :country', { country })
+        .where('contextualPrice.country = :country', {
+          country: countryCode.country,
+        })
         .getMany();
 
       if (!products.length) {

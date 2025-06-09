@@ -9,6 +9,8 @@ import {
   ProductMedia,
   ProductMetafield,
 } from './entities/index';
+import { ShippingModule } from '../shipping/shipping.module';
+import { ShippingService } from '../shipping/shipping.service';
 
 @Module({
   imports: [
@@ -19,8 +21,9 @@ import {
       ProductMetafield,
       ContextualPrice,
     ]),
+    ShippingModule,
   ],
   controllers: [ProductsController],
-  providers: [ProductsService],
+  providers: [ProductsService, ShippingService],
 })
 export class ProductsModule {}

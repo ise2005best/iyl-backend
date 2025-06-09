@@ -1,0 +1,95 @@
+{
+  "zones": {
+    "within_lagos": {
+      "name": "Within Lagos",
+      "description": "Delivery within Lagos, Nigeria",
+      "currency": "NGN",
+      "countries": ["NG"],
+      "states": ["Lagos"],
+      "method": {
+        "name": "Standard Delivery",
+        "cost": 7000,
+        "currency": "NGN",
+        "estimatedDelivery": "1-3 business days"
+      }
+    },
+    "outside_lagos": {
+      "name": "Outside Lagos",
+      "description": "Delivery outside Lagos, Nigeria",
+      "currency": "NGN",
+      "countries": ["NG"],
+      "states": [
+        "Abia",
+        "Adamawa",
+        "Akwa Ibom",
+        "Anambra",
+        "Bauchi",
+        "Bayelsa",
+        "Benue",
+        "Borno",
+        "Cross River",
+        "Delta",
+        "Ebonyi",
+        "Edo",
+        "Ekiti",
+        "Enugu",
+        "Gombe",
+        "Imo",
+        "Jigawa",
+        "Kaduna",
+        "Kano",
+        "Katsina",
+        "Kebbi",
+        "Kogi",
+        "Kwara",
+        "Nasarawa",
+        "Niger",
+        "Ogun",
+        "Ondo",
+        "Osun",
+        "Oyo",
+        "Plateau",
+        "Rivers",
+        "Sokoto",
+        "Taraba",
+        "Yobe",
+        "Zamfara",
+        "FCT"
+      ],
+      "method": {
+        "name": "Standard Delivery",
+        "cost": 8500,
+        "currency": "NGN",
+        "estimatedDelivery": "3-5 business days"
+      }
+    },
+    "international_gbp": {
+      "name": "International within Europe ",
+      "description": "International delivery within Europe",
+      "currency": "GBP",
+     "countries": ["GB", "DE", "FR", "IT", "ES", "NL", "BE", "AT", "CH", "SE", "NO", "DK", "FI", "IE", "PT", "PL", "CZ", "HU", "RO"],
+      "method": {
+        "name": "International Delivery",
+        "cost": 35.00,
+        "currency": "GBP",
+        "estimatedDelivery": "5-10 business days"
+      }
+    },
+    "international_usd": {
+        "name": "International America and Canada",
+        "description": "International delivery within America and Canada",
+        "currency": "USD",
+        "countries": ["US", "CA", "MX", "BR", "AR", "CO", "PE", "CL"],
+        "method": {
+        "name": "International Shipping",
+        "cost": 55,
+        "currency": "USD",
+        "estimatedDelivery": "7-14 business days"
+      }
+    }
+  },
+  "fallback": {
+    "zone": "within_lagos",
+    "message": "International Shipping available"
+  }
+}

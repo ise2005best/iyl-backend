@@ -6,6 +6,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ProductsModule } from './modules/products/products.module';
 import { OrdersModule } from './modules/orders/orders.module';
+import { CheckoutModule } from './modules/checkout/checkout.module';
+import { ShippingModule } from './modules/shipping/shipping.module';
 
 @Module({
   imports: [
@@ -23,6 +25,8 @@ import { OrdersModule } from './modules/orders/orders.module';
     }),
     OrdersModule,
     ProductsModule,
+    CheckoutModule,
+    ShippingModule,
   ],
   controllers: [AppController],
   providers: [AppService],
