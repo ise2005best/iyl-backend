@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { ProductVariant } from '../products/entities';
 import { ContextualPrice } from '../products/entities';
 import { ShippingService } from '../shipping/shipping.service';
@@ -16,6 +16,7 @@ import {
 import {
   CheckoutCalculateResponseDto,
   MoneyDto,
+  ProductDto,
 } from './dtos/checkout-calculate-response.dto';
 import { TaxCalculation } from './dtos/tax-interface';
 
@@ -47,6 +48,8 @@ export class CheckoutService {
   async calculateCheckout(
     data: CheckoutCalculateDto,
   ): Promise<CheckoutCalculateResponseDto> {
+    // get product details and calculate products total
+
     // Validate and calculate items
     const calculatedItems = await this.validateAndCalculateItems(
       data.items,
@@ -66,6 +69,33 @@ export class CheckoutService {
       data.location.country.toUpperCase() === 'NG'
         ? this.calculateNigerianTax(total.amount)
         : this.getNoTax(total.currency);
+
+    const productVariantIds = data.items.map((item) => item.productVariantId);
+
+    const productDetailsList = await this.productVariantRepository.find({
+      where: { id: In(productVariantIds) },
+      relations: ['product'],
+      select: ['id', 'product', 'title'],
+    });
+
+    const products: ProductDto[] = productDetailsList.map((productDetails) => {
+      const calculatedItem = calculatedItems.find(
+        (item) => item.product.id === productDetails.product.id,
+      );
+      const quantity = calculatedItem?.quantity || 0;
+      const unitPrice = calculatedItem?.unitPrice || 0;
+      const currency = calculatedItem?.currency || 'USD';
+      const totalPrice = Math.round(unitPrice * quantity * 100) / 100;
+
+      return {
+        name: productDetails.product.title,
+        variant: productDetails.title,
+        currency: currency,
+        unitPrice: unitPrice,
+        quantity: quantity,
+        totalPrice: totalPrice,
+      };
+    });
 
     // calculate total for each shipping option
     const shippingOptions = shippingZones.zones.map((zone) => ({
@@ -91,6 +121,7 @@ export class CheckoutService {
       total,
       tax,
       shippingOptions,
+      products,
     };
   }
 

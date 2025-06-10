@@ -20,6 +20,44 @@ export class MoneyDto {
   currency: string;
 }
 
+export class ProductDto {
+  @ApiProperty({
+    example: 'Agave Red Sweats',
+    description: 'The name of the product',
+  })
+  name: string;
+
+  @ApiProperty({
+    example: 'M',
+    description: 'Product variant (e.g., size, color)',
+  })
+  variant: string;
+
+  @ApiProperty({
+    example: 4000,
+    description: 'Unit price of the product',
+  })
+  unitPrice: number;
+
+  @ApiProperty({
+    example: 'NGN',
+    description: 'Currency of the product price',
+  })
+  currency: string;
+
+  @ApiProperty({
+    example: 8000,
+    description: 'Total price for all quantities (unitPrice × quantity)',
+  })
+  totalPrice: number;
+
+  @ApiProperty({
+    example: 2,
+    description: 'Quantity of the product',
+  })
+  quantity: number;
+}
+
 export class TaxBreakdownDto {
   @ApiProperty({ example: 3750 })
   amount: number;
@@ -73,4 +111,9 @@ export class CheckoutCalculateResponseDto {
     type: [ShippingOptionsDto],
   })
   shippingOptions: ShippingOptionsDto[];
+
+  @ApiProperty({
+    type: [ProductDto],
+  })
+  products: ProductDto[];
 }
