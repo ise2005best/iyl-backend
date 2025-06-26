@@ -43,7 +43,7 @@ export class ProductMetafield {
   @Column('text')
   value: string;
 
-  @Column('uuid')
+  @Column({ type: 'varchar' })
   productId: string;
 
   @ManyToOne(() => Product, (product) => product.metafields, {

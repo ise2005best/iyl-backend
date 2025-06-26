@@ -8,6 +8,7 @@ import { ProductsModule } from './modules/products/products.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { CheckoutModule } from './modules/checkout/checkout.module';
 import { ShippingModule } from './modules/shipping/shipping.module';
+import { PaymentsModule } from './modules/payments/payments.module';
 
 @Module({
   imports: [
@@ -17,16 +18,20 @@ import { ShippingModule } from './modules/shipping/shipping.module';
       cache: true,
     }),
     TypeOrmModule.forRoot({
-      type: 'sqlite',
-      database: 'iyl-store.sqlite', // This creates a file in your project root
-      entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: true, // Auto-creates tables from your entities
+      type: 'postgres',
+      url: process.env.DATABASE_URL,
+      autoLoadEntities: true, // Automatically loads entities from modules
+      //synchronize: true, // Auto-creates tables from your entities
       logging: true, // Shows SQL queries in console (helpful for development)
+      ssl: {
+        rejectUnauthorized: false,
+      },
     }),
     OrdersModule,
     ProductsModule,
     CheckoutModule,
     ShippingModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

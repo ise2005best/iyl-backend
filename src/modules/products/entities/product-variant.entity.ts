@@ -59,6 +59,6 @@ export class ProductVariant {
   @JoinColumn({ name: 'productId' })
   product: Product;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: 'varchar' })
   productId: string;
 }
