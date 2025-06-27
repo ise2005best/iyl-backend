@@ -14,6 +14,8 @@ import {
   OrderStatus,
   PaymentStatus,
 } from '../orders/entities/orders.entity';
+import { Product, ProductVariant } from '../products/entities';
+import { EmailService } from '../email/email.service';
 
 interface FlutterwaveResponse {
   data: {
@@ -34,6 +36,11 @@ export class PaymentsService {
     private paymentIntentRepository: Repository<PaymentIntent>,
     @InjectRepository(Order)
     private orderRepository: Repository<Order>,
+    @InjectRepository(Product)
+    private productRepository: Repository<Product>,
+    @InjectRepository(ProductVariant)
+    private productVariantRepository: Repository<ProductVariant>,
+    private readonly emailService: EmailService,
   ) {
     this.axiosInstance = axios.create({
       baseURL: this.baseUrl,
@@ -163,6 +170,28 @@ export class PaymentsService {
           paymentIntent.orderNumber,
           paymentIntent.id,
         );
+
+        // next we update the product inventory and reduce the stock
+        const order = await this.orderRepository.findOne({
+          where: { orderNumber: paymentIntent.orderNumber },
+        });
+
+        if (!order) {
+          throw new Error(`Order ${paymentIntent.orderNumber} not found`);
+        }
+
+        for (const product of order?.productDetails.items || []) {
+          await this.updateProductInventory({
+            id: product.productId,
+            variantId: product.variantId,
+            quantity: product.quantity,
+          });
+        }
+
+        // next we send emails to the customer and the admin about the receipt of the order
+        await this.emailService.sendOrderConfirmationEmailToCustomer(order.id);
+        await this.emailService.sendOrderConfirmationEmailToAdmin(order.id);
+
         return {
           success: true,
           status: 'success',
@@ -207,6 +236,36 @@ export class PaymentsService {
       })
       .where('orderNumber = :orderNumber', {
         orderNumber: orderNumber,
+      })
+      .execute();
+  }
+
+  private async updateProductInventory(product: {
+    id: string;
+    variantId: number;
+    quantity: number;
+  }) {
+    // update the total inventory of the product
+    await this.productRepository
+      .createQueryBuilder()
+      .update(Product)
+      .set({
+        totalInventory: () => `totalInventory - ${product.quantity}`,
+      })
+      .where('id = :id', {
+        id: product.id,
+      })
+      .execute();
+
+    // update the quantity of the product variant
+    await this.productVariantRepository
+      .createQueryBuilder()
+      .update(ProductVariant)
+      .set({
+        quantity: () => `quantity - ${product.quantity}`,
+      })
+      .where('id = :id', {
+        id: product.variantId,
       })
       .execute();
   }

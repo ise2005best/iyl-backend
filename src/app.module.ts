@@ -10,6 +10,7 @@ import { CheckoutModule } from './modules/checkout/checkout.module';
 import { ShippingModule } from './modules/shipping/shipping.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { FlutterwavePaymentIntentModule } from './modules/flutterwave-payment-intent/flutterwave-payment-intent.module';
+import { EmailModule } from './modules/email/email.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { FlutterwavePaymentIntentModule } from './modules/flutterwave-payment-in
     ShippingModule,
     PaymentsModule,
     FlutterwavePaymentIntentModule,
+    EmailModule,
   ],
   controllers: [AppController],
   providers: [AppService],

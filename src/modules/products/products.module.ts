@@ -25,5 +25,6 @@ import { ShippingService } from '../shipping/shipping.service';
   ],
   controllers: [ProductsController],
   providers: [ProductsService, ShippingService],
+  exports: [ProductsService, TypeOrmModule],
 })
 export class ProductsModule {}
