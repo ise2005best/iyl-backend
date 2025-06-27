@@ -25,6 +25,7 @@ export class OrdersService {
     // and send the order confirmation email to both the customer and the admin
     // for order number we use
     try {
+      console.log('Creating order with data:', orderData);
       const paymentPayload: CreatePaymentDto = {
         amount: orderData.orderTotal,
         currency: orderData.currency,

@@ -26,6 +26,7 @@ export class OrdersController {
   async createOrder(
     @Body() createOrderDto: CreateOrderDto,
   ): Promise<CreateOrderResponseDto> {
+    console.log('Creating order with data:', createOrderDto);
     return this.ordersService.createOrder(createOrderDto);
   }
 }
