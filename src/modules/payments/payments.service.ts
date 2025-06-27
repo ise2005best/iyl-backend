@@ -73,7 +73,8 @@ export class PaymentsService {
         amount: Number(createPaymentDto.amount),
         currency: createPaymentDto.currency || 'NGN',
         redirect_url:
-          createPaymentDto.redirect_url || `${process.env.FRONTEND_URL}/orders/verify-payment`,
+          createPaymentDto.redirect_url ||
+          `${process.env.FRONTEND_URL}/orders/verify-payment`,
         payment_options: 'card, ussd, banktransfer, googlepay, applepay, bank',
         customer: createPaymentDto.customer,
         customizations: {

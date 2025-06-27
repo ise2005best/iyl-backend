@@ -126,7 +126,7 @@ export class Order {
       items: [
         {
           productId: '123e4567-e89b-12d3-a456-426614174000',
-          variantId: '4',
+          variantId: 4,
           productName: 'AGAVE Red Sweat Pants',
           variantName: 'S',
           unitPrice: 60000,
@@ -141,7 +141,7 @@ export class Order {
   productDetails: {
     items: Array<{
       productId: string;
-      variantId: string;
+      variantId: number;
       productName: string;
       variantName: string;
       unitPrice: number;
@@ -153,11 +153,11 @@ export class Order {
   @ApiProperty({
     description: 'Shipping address information',
     example: {
-        address: '123 Main Street',
-        city: 'Lagos',
-        state: 'Lagos State',
-        postalCode: '100001',
-        country: 'Nigeria',
+      address: '123 Main Street',
+      city: 'Lagos',
+      state: 'Lagos State',
+      postalCode: '100001',
+      country: 'Nigeria',
     },
   })
   @Column({ type: 'jsonb' })

@@ -56,11 +56,11 @@ export class ProductInformationDto {
 
   @ApiProperty({
     description: 'Product variant unique identifier',
-    type: 'string',
-    example: '4',
+    type: 'number',
+    example: 4,
   })
-  @IsString()
-  variantId: string;
+  @IsNumber()
+  variantId: number;
 
   @ApiProperty({
     description: 'Product name',
