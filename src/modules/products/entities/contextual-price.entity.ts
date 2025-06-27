@@ -55,7 +55,7 @@ export class ContextualPrice {
   @Column()
   country: string;
 
-  @Column({ type: 'varchar' })
+  @Column('uuid')
   productId: string;
 
   @ManyToOne(() => Product, (product) => product.contextualPricing, {

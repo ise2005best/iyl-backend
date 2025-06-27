@@ -9,6 +9,7 @@ import { OrdersModule } from './modules/orders/orders.module';
 import { CheckoutModule } from './modules/checkout/checkout.module';
 import { ShippingModule } from './modules/shipping/shipping.module';
 import { PaymentsModule } from './modules/payments/payments.module';
+import { FlutterwavePaymentIntentModule } from './modules/flutterwave-payment-intent/flutterwave-payment-intent.module';
 
 @Module({
   imports: [
@@ -21,8 +22,7 @@ import { PaymentsModule } from './modules/payments/payments.module';
       type: 'postgres',
       url: process.env.DATABASE_URL,
       autoLoadEntities: true, // Automatically loads entities from modules
-      //synchronize: true, // Auto-creates tables from your entities
-      logging: true, // Shows SQL queries in console (helpful for development)
+      synchronize: true, // Auto-creates tables from your entities
       ssl: {
         rejectUnauthorized: false,
       },
@@ -32,6 +32,7 @@ import { PaymentsModule } from './modules/payments/payments.module';
     CheckoutModule,
     ShippingModule,
     PaymentsModule,
+    FlutterwavePaymentIntentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -43,7 +43,7 @@ export class ProductMedia {
   @Column({ default: 0 })
   position: number; // For ordering images
 
-  @Column({ type: 'varchar' })
+  @Column('uuid')
   productId: string;
 
   @ManyToOne(() => Product, (product) => product.media, { onDelete: 'CASCADE' })
