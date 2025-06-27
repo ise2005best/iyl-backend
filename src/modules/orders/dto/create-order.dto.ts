@@ -127,7 +127,8 @@ export class ShippingDetailsDto {
     example: 'Lagos',
   })
   @IsString()
-  city: string;
+  @IsOptional()
+  city?: string;
 
   @ApiProperty({
     description: 'Shipping state or region',
@@ -246,7 +247,8 @@ export class CreateOrderDto {
     example: 7.5,
   })
   @IsNumber()
-  taxPercentage: number;
+  @IsOptional()
+  taxPercentage?: number;
 
   @ApiProperty({
     description: 'Tax amount calculated from subtotal',
@@ -254,7 +256,8 @@ export class CreateOrderDto {
     example: 11.25,
   })
   @IsNumber()
-  taxAmount: number;
+  @IsOptional()
+  taxAmount?: number;
 
   @ApiProperty({
     description: 'Type of shipping selected',

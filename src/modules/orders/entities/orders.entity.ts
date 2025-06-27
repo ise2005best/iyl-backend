@@ -64,7 +64,7 @@ export class Order {
     type: 'number',
     example: 7.5,
   })
-  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  @Column('decimal', { precision: 10, scale: 2, default: 0, nullable: true })
   taxPercentage: number;
 
   @ApiProperty({
@@ -72,7 +72,7 @@ export class Order {
     type: 'number',
     example: 12000.0,
   })
-  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  @Column('decimal', { precision: 10, scale: 2, default: 0, nullable: true })
   taxAmount: number;
   @ApiProperty({
     description: 'Shipping type',
@@ -163,7 +163,7 @@ export class Order {
   @Column({ type: 'jsonb' })
   shippingDetails: {
     address: string;
-    city: string;
+    city?: string;
     state: string;
     postalCode?: string;
     country: string;
