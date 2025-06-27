@@ -49,6 +49,14 @@ export class CreatePaymentDto {
   @IsString()
   @IsOptional()
   redirect_url: string;
+  @ApiProperty({
+    description: 'The order Number associated with the payment',
+    type: 'string',
+    example: '1',
+    required: false,
+  })
+  @IsString()
+  orderNumber: string;
 
   @ApiProperty({
     description: 'Customer details for the payment',
@@ -86,5 +94,5 @@ export class VerifyPaymentDto {
   })
   @IsString()
   @IsNotEmpty()
-  transaction_ref: string;
+  tx_ref: string;
 }

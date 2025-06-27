@@ -24,7 +24,10 @@ export class PaymentIntent {
   status: string;
 
   @Column({ nullable: true })
-  flutterwaveTransactionId: string;
+  flutterwaveTransactionId: number;
+
+  @Column()
+  orderNumber: string;
 
   @CreateDateColumn()
   createdAt: Date;

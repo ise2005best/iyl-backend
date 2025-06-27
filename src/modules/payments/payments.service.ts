@@ -9,6 +9,11 @@ import { CreatePaymentDto, VerifyPaymentDto } from './dtos/create-payment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaymentIntent } from '../flutterwave-payment-intent/entities/flutterwave-payment-intent.entity';
 import { Repository } from 'typeorm';
+import {
+  Order,
+  OrderStatus,
+  PaymentStatus,
+} from '../orders/entities/orders.entity';
 
 interface FlutterwaveResponse {
   data: {
@@ -27,6 +32,8 @@ export class PaymentsService {
   constructor(
     @InjectRepository(PaymentIntent)
     private paymentIntentRepository: Repository<PaymentIntent>,
+    @InjectRepository(Order)
+    private orderRepository: Repository<Order>,
   ) {
     this.axiosInstance = axios.create({
       baseURL: this.baseUrl,
@@ -66,6 +73,7 @@ export class PaymentsService {
     createPaymentDto: CreatePaymentDto,
   ): Promise<{ status: string; data: { link: string; tx_ref: string } }> {
     try {
+      console.log('Initializing payment with data:', createPaymentDto);
       const payload = {
         tx_ref: `iylmibs-${crypto.randomBytes(16).toString('hex')}`,
         // have to convert amount to a number, flutterwave expects it as a number
@@ -74,7 +82,7 @@ export class PaymentsService {
         currency: createPaymentDto.currency || 'NGN',
         redirect_url:
           createPaymentDto.redirect_url ||
-          `${process.env.FRONTEND_URL}/orders/verify-payment`,
+          `${process.env.FRONTEND_URL}/store/orders/verify-payment`,
         payment_options: 'card, ussd, banktransfer, googlepay, applepay, bank',
         customer: createPaymentDto.customer,
         customizations: {
@@ -84,11 +92,13 @@ export class PaymentsService {
         },
       };
 
-      // add payment intent to the database
+      // add payment intent to the database and add the orderId of the order
+      // that this payment intent is associated with
       const flutterwavePaymentIntent = this.paymentIntentRepository.create({
         expectedAmount: createPaymentDto.amount,
         expectedCurrency: createPaymentDto.currency || 'NGN',
         txRef: payload.tx_ref,
+        orderNumber: createPaymentDto.orderNumber,
       });
       await this.paymentIntentRepository.save(flutterwavePaymentIntent);
 
@@ -118,7 +128,7 @@ export class PaymentsService {
   }
   async verifyPayment(
     verifyPaymentDto: VerifyPaymentDto,
-  ): Promise<{ status: string; data: any }> {
+  ): Promise<{ status: string; success: boolean }> {
     try {
       const response = await this.axiosInstance.get(
         `/transactions/${verifyPaymentDto.transaction_id}/verify`,
@@ -126,7 +136,7 @@ export class PaymentsService {
 
       // get the payment intent from db to ensure the amount the user paid is the same as the expected amount
       const paymentIntent = await this.paymentIntentRepository.findOne({
-        where: { txRef: verifyPaymentDto.transaction_ref },
+        where: { txRef: verifyPaymentDto.tx_ref },
       });
       if (!paymentIntent) {
         throw new BadRequestException(
@@ -139,19 +149,23 @@ export class PaymentsService {
       // database stores amount as a decimal, e.g 200.00 but flutterwave returns it as integer e.g 200
       // so we need to compare the amounts accordingly
       const expectedAmount = Number(paymentIntent.expectedAmount);
-
+      // ensure all the amounts are the same so the user is not charged more than expected or charged less than expected
       if (
-        returnedStatus === 'success' &&
+        (returnedStatus === 'success' || returnedStatus === 'completed') &&
         returnedAmount === expectedAmount &&
         returnedCurrency === paymentIntent.expectedCurrency
       ) {
-        console.log(
-          `Payment verified successfully: ${verifyPaymentDto.transaction_id}`,
+        // update the payment intent status and flutterwave transaction id
+        // update the order status to completed and payment status to completed
+        await this.updateDetails(
+          verifyPaymentDto.transaction_id,
+          verifyPaymentDto.tx_ref,
+          paymentIntent.orderNumber,
+          paymentIntent.id,
         );
-        console.log('Verification response:', response.data);
         return {
+          success: true,
           status: 'success',
-          data: response.data.data,
         };
       } else {
         throw new BadRequestException(
@@ -165,5 +179,35 @@ export class PaymentsService {
         error instanceof Error ? error.message : String(error),
       );
     }
+  }
+
+  private async updateDetails(
+    flutterwaveTransactionId: number,
+    tx_ref: string,
+    orderNumber: string,
+    paymentIntentId: string,
+  ) {
+    await this.paymentIntentRepository
+      .createQueryBuilder()
+      .update(PaymentIntent)
+      .set({
+        status: 'Completed',
+        flutterwaveTransactionId: flutterwaveTransactionId,
+      })
+      .where('txRef = :txRef', { txRef: tx_ref })
+      .execute();
+
+    await this.orderRepository
+      .createQueryBuilder()
+      .update(Order)
+      .set({
+        status: OrderStatus.CONFIRMED,
+        paymentStatus: PaymentStatus.PAID,
+        paymentIntentId: paymentIntentId,
+      })
+      .where('orderNumber = :orderNumber', {
+        orderNumber: orderNumber,
+      })
+      .execute();
   }
 }

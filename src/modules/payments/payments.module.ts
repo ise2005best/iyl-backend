@@ -4,9 +4,10 @@ import { PaymentsController } from './payments.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PaymentIntent } from '../flutterwave-payment-intent/entities/flutterwave-payment-intent.entity';
 import { FlutterwavePaymentIntentService } from '../flutterwave-payment-intent/flutterwave-payment-intent.service';
+import { Order } from '../orders/entities/orders.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([PaymentIntent])],
+  imports: [TypeOrmModule.forFeature([PaymentIntent, Order])],
   providers: [PaymentsService, FlutterwavePaymentIntentService],
   controllers: [PaymentsController],
   exports: [PaymentsService, FlutterwavePaymentIntentService],

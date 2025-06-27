@@ -1,8 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsOptional } from 'class-validator';
 import {
   Column,
   CreateDateColumn,
   Entity,
+  Generated,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -28,6 +30,19 @@ export class Order {
   })
   @PrimaryGeneratedColumn()
   id: string;
+
+  @ApiProperty({
+    description: 'Unique order number for tracking',
+    type: 'string',
+    example: '1001',
+  })
+  @Generated('increment')
+  @Column({
+    type: 'int',
+    unique: true,
+    generated: 'increment',
+  })
+  orderNumber: string;
 
   @ApiProperty({
     description: 'Current status of the order',
@@ -176,6 +191,15 @@ export class Order {
   })
   @Column({ nullable: true })
   trackingNumber?: string;
+
+  @ApiProperty({
+    description: 'Payment intent ID from the payment gateway',
+    type: 'string',
+    required: false,
+  })
+  @Column({ nullable: true })
+  @IsOptional()
+  paymentIntentId?: string;
 
   @ApiProperty({
     description: 'When the order was created',

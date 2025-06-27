@@ -18,32 +18,14 @@ export class OrdersService {
     orderData: CreateOrderDto,
   ): Promise<CreateOrderResponseDto> {
     // lot of logic to handle order creation
-    // start we initiate the order and call the create payment service
+    // start we initiate the order by creating a new order and setting its status to pending and payment status to pending
     // then we save the order to the database
+    // after that we initiate the payment using the payment service and pass order id to be able to be able to update the order status later
     // the verify payment service will update the order status
     // it will also update the product inventory
     // and send the order confirmation email to both the customer and the admin
-    // for order number we use
     try {
-      console.log('Creating order with data:', orderData);
-      const paymentPayload: CreatePaymentDto = {
-        amount: orderData.orderTotal,
-        currency: orderData.currency,
-        redirect_url: `${process.env.FRONTEND_URL}/orders/verify-payment`,
-        customer: {
-          email: orderData.customerInfo.email,
-          phonenumber: orderData.customerInfo.phone,
-          name: `${orderData.customerInfo.firstName} ${orderData.customerInfo.lastName}`,
-        },
-      };
-
-      const initializeFlutterwavePayment =
-        await this.paymentService.intiatePayment(paymentPayload);
-      console.log(
-        'Flutterwave payment initialized:',
-        initializeFlutterwavePayment,
-      );
-
+      // create the order payload
       const payload = {
         status: OrderStatus.PENDING,
         paymentStatus: PaymentStatus.PENDING,
@@ -79,9 +61,25 @@ export class OrdersService {
           postalCode: orderData.shippingDetails.postalCode,
         },
       };
-      console.log('Order payload:', payload);
+      // save the order to the database
       const order = this.ordersRepository.create(payload);
       await this.ordersRepository.save(order);
+
+      // create the payment payload
+      const paymentPayload: CreatePaymentDto = {
+        amount: orderData.orderTotal,
+        currency: orderData.currency,
+        redirect_url: `${process.env.FRONTEND_URL}/store/orders/verify-payment`,
+        orderNumber: order.orderNumber,
+        customer: {
+          email: orderData.customerInfo.email,
+          phonenumber: orderData.customerInfo.phone,
+          name: `${orderData.customerInfo.firstName} ${orderData.customerInfo.lastName}`,
+        },
+      };
+
+      const initializeFlutterwavePayment =
+        await this.paymentService.intiatePayment(paymentPayload);
       return {
         message: 'Order created successfully',
         fullName: `${orderData.customerInfo.firstName} ${orderData.customerInfo.lastName}`,
@@ -91,5 +89,11 @@ export class OrdersService {
       console.error('Error creating order:', error);
       throw new Error('Failed to create order. Please try again later.');
     }
+  }
+
+  private async generateOrderNumber(): Promise<string> {
+    const orderCount = await this.ordersRepository.count();
+    const orderNumber = 1000 + orderCount;
+    return orderNumber.toString();
   }
 }
