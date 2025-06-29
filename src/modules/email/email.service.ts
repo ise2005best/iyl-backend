@@ -122,6 +122,7 @@ export class EmailService {
         'ifyouleavemeillbescared@gmail.com',
         'Sergmonu@gmail.com',
         'aladetemitope0@gmail.com',
+        'iseoluwaariyibi@gmail.com',
       ],
       subject: `New order from ${order.customerDetails.name}`,
       html: htmlContent,
