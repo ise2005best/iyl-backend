@@ -45,7 +45,7 @@ export class PaymentsService {
     this.axiosInstance = axios.create({
       baseURL: this.baseUrl,
       headers: {
-        Authorization: `Bearer ${process.env.FLUTTERWAVE_TEST_SECRET_KEY}`,
+        Authorization: `Bearer ${process.env.FLUTTERWAVE_SECRET_KEY}`,
         'Content-Type': 'application/json',
       },
     });
