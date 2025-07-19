@@ -8,7 +8,7 @@ import * as crypto from 'crypto';
 import { CreatePaymentDto, VerifyPaymentDto } from './dtos/create-payment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaymentIntent } from '../flutterwave-payment-intent/entities/flutterwave-payment-intent.entity';
-import { Repository } from 'typeorm';
+import { QueryRunner, Repository } from 'typeorm';
 import {
   Order,
   OrderStatus,
@@ -34,12 +34,6 @@ export class PaymentsService {
   constructor(
     @InjectRepository(PaymentIntent)
     private paymentIntentRepository: Repository<PaymentIntent>,
-    @InjectRepository(Order)
-    private orderRepository: Repository<Order>,
-    @InjectRepository(Product)
-    private productRepository: Repository<Product>,
-    @InjectRepository(ProductVariant)
-    private productVariantRepository: Repository<ProductVariant>,
     private readonly emailService: EmailService,
   ) {
     this.axiosInstance = axios.create({
@@ -136,20 +130,54 @@ export class PaymentsService {
   async verifyPayment(
     verifyPaymentDto: VerifyPaymentDto,
   ): Promise<{ status: string; success: boolean }> {
+    // create a query runner to handle transactions to ensure ACID properties
+    // since we are updating multiple tables and we want to ensure that either all updates succeed or none of them do
+    const queryRunner =
+      this.paymentIntentRepository.manager.connection.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
     try {
-      const response = await this.axiosInstance.get(
-        `/transactions/${verifyPaymentDto.transaction_id}/verify`,
-      );
-
-      // get the payment intent from db to ensure the amount the user paid is the same as the expected amount
-      const paymentIntent = await this.paymentIntentRepository.findOne({
-        where: { txRef: verifyPaymentDto.tx_ref },
+      // check 1
+      // check if the payment has already been processed
+      const paymentIntent = await queryRunner.manager.findOne(PaymentIntent, {
+        where: { txRef: verifyPaymentDto.tx_ref, status: 'Completed' },
       });
+
       if (!paymentIntent) {
         throw new BadRequestException(
           'Payment intent not found for the provided transaction reference',
         );
       }
+
+      // check 2
+      // if the payment intent is already completed, we return success
+      if (paymentIntent.status === 'completed') {
+        await queryRunner.rollbackTransaction();
+        return {
+          status: 'success',
+          success: true,
+        };
+      }
+
+      // check 3
+      // if the payment intent is still processing, we return an error
+      // to avoid double processing of the payment
+      if (paymentIntent.status === 'processing') {
+        await queryRunner.rollbackTransaction();
+        throw new BadRequestException('Payment is currently being processed');
+      }
+
+      // Once all checks are passed, the payment intent is marked as processing
+      await queryRunner.manager.update(
+        PaymentIntent,
+        { id: paymentIntent.id },
+        { status: 'processing', updatedAt: new Date() },
+      );
+
+      const response = await this.axiosInstance.get(
+        `/transactions/${verifyPaymentDto.transaction_id}/verify`,
+      );
+
       const returnedStatus = response.data.status;
       const returnedAmount = response.data.data.amount;
       const returnedCurrency = response.data.data.currency;
@@ -164,30 +192,52 @@ export class PaymentsService {
       ) {
         // update the payment intent status and flutterwave transaction id
         // update the order status to completed and payment status to completed
-        await this.updateDetails(
-          verifyPaymentDto.transaction_id,
-          verifyPaymentDto.tx_ref,
-          paymentIntent.orderNumber,
-          paymentIntent.id,
+
+        // lets update all necessary details atomically
+        // update the payment intent status to completed
+        await queryRunner.manager.update(
+          PaymentIntent,
+          { txRef: paymentIntent.txRef },
+          {
+            status: 'Completed',
+            flutterwaveTransactionId: verifyPaymentDto.transaction_id,
+            updatedAt: new Date(),
+          },
+        );
+
+        // update the order status to confirmed and payment status to paid
+        await queryRunner.manager.update(
+          Order,
+          { orderNumber: paymentIntent.orderNumber },
+          {
+            status: OrderStatus.CONFIRMED,
+            paymentStatus: PaymentStatus.PAID,
+            paymentIntentId: paymentIntent.id,
+            updatedAt: new Date(),
+          },
         );
 
         // next we update the product inventory and reduce the stock
-        const order = await this.orderRepository.findOne({
+        const order = await queryRunner.manager.findOne(Order, {
           where: { orderNumber: paymentIntent.orderNumber },
         });
-
         if (!order) {
           throw new Error(`Order ${paymentIntent.orderNumber} not found`);
         }
 
+        // update the product inventory based on the order details
         for (const product of order?.productDetails.items || []) {
-          await this.updateProductInventory({
+          await this.updateProductInventory(queryRunner, {
             id: product.productId,
             variantId: product.variantId,
             quantity: product.quantity,
           });
         }
 
+        // commit the transaction
+        await queryRunner.commitTransaction();
+
+        // after committing the transaction, we can now send the order confirmation emails
         // next we send emails to the customer and the admin about the receipt of the order
         await this.emailService.sendOrderConfirmationEmailToCustomer(order.id);
         await this.emailService.sendOrderConfirmationEmailToAdmin(order.id);
@@ -197,11 +247,19 @@ export class PaymentsService {
           status: 'success',
         };
       } else {
+        // if the payment verification fails, we change the status of the payment intent to failed and rollback the transaction
+        await queryRunner.manager.update(
+          PaymentIntent,
+          { id: paymentIntent.id },
+          { status: 'Failed', updatedAt: new Date() },
+        );
+        await queryRunner.commitTransaction();
         throw new BadRequestException(
           `Payment verification failed: ${response.data.message}`,
         );
       }
     } catch (error) {
+      await queryRunner.rollbackTransaction();
       console.error(error, 'Payment verification failed');
       throw new InternalServerErrorException(
         'Payment verification failed',
@@ -210,43 +268,16 @@ export class PaymentsService {
     }
   }
 
-  private async updateDetails(
-    flutterwaveTransactionId: number,
-    tx_ref: string,
-    orderNumber: string,
-    paymentIntentId: string,
+  private async updateProductInventory(
+    queryRunner: QueryRunner,
+    product: {
+      id: string;
+      variantId: number;
+      quantity: number;
+    },
   ) {
-    await this.paymentIntentRepository
-      .createQueryBuilder()
-      .update(PaymentIntent)
-      .set({
-        status: 'Completed',
-        flutterwaveTransactionId: flutterwaveTransactionId,
-      })
-      .where('txRef = :txRef', { txRef: tx_ref })
-      .execute();
-
-    await this.orderRepository
-      .createQueryBuilder()
-      .update(Order)
-      .set({
-        status: OrderStatus.CONFIRMED,
-        paymentStatus: PaymentStatus.PAID,
-        paymentIntentId: paymentIntentId,
-      })
-      .where('orderNumber = :orderNumber', {
-        orderNumber: orderNumber,
-      })
-      .execute();
-  }
-
-  private async updateProductInventory(product: {
-    id: string;
-    variantId: number;
-    quantity: number;
-  }) {
     // update the total inventory of the product
-    await this.productRepository
+    await queryRunner.manager
       .createQueryBuilder()
       .update(Product)
       .set({
@@ -258,7 +289,7 @@ export class PaymentsService {
       .execute();
 
     // update the quantity of the product variant
-    await this.productVariantRepository
+    await queryRunner.manager
       .createQueryBuilder()
       .update(ProductVariant)
       .set({
