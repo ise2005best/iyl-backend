@@ -138,9 +138,9 @@ export class PaymentsService {
     await queryRunner.startTransaction();
     try {
       // check 1
-      // check if the payment has already been processed
+      // check if the payment has been found
       const paymentIntent = await queryRunner.manager.findOne(PaymentIntent, {
-        where: { txRef: verifyPaymentDto.tx_ref, status: 'Completed' },
+        where: { txRef: verifyPaymentDto.tx_ref },
       });
 
       if (!paymentIntent) {
@@ -239,8 +239,8 @@ export class PaymentsService {
 
         // after committing the transaction, we can now send the order confirmation emails
         // next we send emails to the customer and the admin about the receipt of the order
-        // await this.emailService.sendOrderConfirmationEmailToCustomer(order.id);
-        // await this.emailService.sendOrderConfirmationEmailToAdmin(order.id);
+        await this.emailService.sendOrderConfirmationEmailToCustomer(order.id);
+        await this.emailService.sendOrderConfirmationEmailToAdmin(order.id);
 
         return {
           success: true,
