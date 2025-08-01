@@ -542,7 +542,7 @@ export const orderDelivered = (data: {
             <div class="tracking-section">
                 <div class="tracking-title">Track Your Package</div>
                 <div class="tracking-card">
-                    <div class="tracking-number">${data.deliveryPin}</div>
+                    <div class="tracking-number">${data.trackingNumber}</div>
                     
                     <div class="logistics-info">
                         <div class="logistics-company">📦 Delivered by: ${data.deliveryCompany}</div>
