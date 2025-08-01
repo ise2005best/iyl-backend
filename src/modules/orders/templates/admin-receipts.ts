@@ -34,15 +34,6 @@ export const receiptTemplate = (data: {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>New Order Received</title>
-    <!--[if mso]>
-    <noscript>
-        <xml>
-            <o:OfficeDocumentSettings>
-                <o:PixelsPerInch>96</o:PixelsPerInch>
-            </o:OfficeDocumentSettings>
-        </xml>
-    </noscript>
-    <![endif]-->
     <style>
         /* Keep your original styles for Apple Mail and other clients */
         * {
@@ -462,25 +453,35 @@ export const receiptTemplate = (data: {
                     (item) => `
                     <!-- Gmail-compatible item structure -->
                     <div class="item">
-                        <div style="display: table; width: 100%;">
-                            <div style="display: table-cell; width: 120px; vertical-align: top; padding-right: 20px;">
-                                ${
-                                  item.image
-                                    ? `<img src="${item.image}" alt="${item.productName}" class="item-image" style="display: block; width: 100px; height: 120px; border-radius: 6px; object-fit: cover;">`
-                                    : '<div class="item-image" style="background-color: #f5f5f5; display: flex; align-items: center; justify-content: center; color: #999; width: 100px; height: 120px; border-radius: 6px;">No Image</div>'
-                                }
+                       <div class="item" style="width: 100%; display: block; padding: 16px 0; border-bottom: 1px solid #f0f0f0;">
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse;">
+                            <tr>
+                             <td width="120" valign="top" style="padding-right: 16px;">
+                                 ${
+                                   item.image
+                                     ? `<img src="${item.image}" alt="${item.productName}" style="display: block; width: 100px; height: 120px; border-radius: 6px; object-fit: cover;">`
+                                     : `<div style="width: 100px; height: 120px; background-color: #f5f5f5; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #999; font-size: 12px;">No Image</div>`
+                                 }
+                            </td>
+                            <td valign="top" style="padding-right: 16px;">
+                             <div style="font-weight: 700; color: #005235; font-size: 13px; margin-bottom: 6px; line-height: 1.4;">
+                              ${item.productName}
+                                 </div>
+                             <div style="color: #666; font-size: 11px; margin-bottom: 4px; font-weight: 500;">
+                             ${data.currency} ${item.unitPrice.toLocaleString()} x ${item.quantity}
+                             </div>
+                             <div style="color: #C90016; font-size: 11px; font-weight: 600;">
+                             ${item.variantName}
                             </div>
-                            <div style="display: table-cell; vertical-align: top; padding-right: 20px;">
-                                <div class="item-name" style="font-weight: 700; color: #005235; font-size: 15px; margin-bottom: 6px; line-height: 1.4;">${item.productName}</div>
-                                <div class="item-quantity" style="color: #666; font-size: 13px; margin-bottom: 4px; font-weight: 500;">${data.currency} ${item.unitPrice.toLocaleString()} x ${item.quantity}</div>
-                                <div class="item-variant" style="color: #C90016; font-size: 13px; font-weight: 600; display: inline-block;">${item.variantName}</div>
-                            </div>
-                            <div style="display: table-cell; vertical-align: top; text-align: right; white-space: nowrap;">
-                                <div class="item-total" style="color: #005235; font-weight: 700; font-size: 16px;">
-                                    ${data.currency}${item.lineTotal.toLocaleString()}
-                                </div>
-                            </div>
-                        </div>
+                             </td>
+                             <td valign="top" align="right" style="white-space: nowrap;">
+                                  <div style="color: #005235; font-weight: 700; font-size: 14px;">
+                                     ${data.currency}${item.lineTotal.toLocaleString()}
+                                    </div>
+                             </td>
+                        </tr>
+                        </table>
+                    </div>
                     </div>
                 `,
                   )

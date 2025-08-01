@@ -5,7 +5,11 @@ import {
 } from '@nestjs/common';
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import * as crypto from 'crypto';
-import { CreatePaymentDto, VerifyPaymentDto } from './dtos/create-payment.dto';
+import {
+  CreatePaymentDto,
+  UpdateOrderDto,
+  VerifyPaymentDto,
+} from './dtos/create-payment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaymentIntent } from '../flutterwave-payment-intent/entities/flutterwave-payment-intent.entity';
 import { QueryRunner, Repository } from 'typeorm';
@@ -34,6 +38,8 @@ export class PaymentsService {
   constructor(
     @InjectRepository(PaymentIntent)
     private paymentIntentRepository: Repository<PaymentIntent>,
+    @InjectRepository(Order)
+    private orderRepository: Repository<Order>,
     private readonly emailService: EmailService,
   ) {
     this.axiosInstance = axios.create({
@@ -265,6 +271,43 @@ export class PaymentsService {
         'Payment verification failed',
         error instanceof Error ? error.message : String(error),
       );
+    }
+  }
+
+  async updateOrderWithTrackingNumber(dto: UpdateOrderDto): Promise<boolean> {
+    const queryRunner =
+      this.orderRepository.manager.connection.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const orders = await queryRunner.manager.findOne(Order, {
+        where: { id: dto.orderId },
+      });
+
+      if (!orders) {
+        throw new Error(`Order ${dto.orderId} not found`);
+      }
+
+      await queryRunner.manager.update(
+        Order,
+        { id: dto.orderId },
+        {
+          trackingNumber: dto.trackingNumber,
+        },
+      );
+      await queryRunner.commitTransaction();
+
+      await this.emailService.orderDeliveredEmail(
+        orders,
+        dto.trackingNumber,
+        dto.deliveryPin || 'N/A',
+        dto.logisticsCompany,
+      );
+
+      return true;
+    } catch (error) {
+      console.error(error);
+      return false;
     }
   }
 

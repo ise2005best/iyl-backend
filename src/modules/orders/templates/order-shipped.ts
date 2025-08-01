@@ -1,11 +1,8 @@
-export const receiptTemplate = (data: {
+export const orderDelivered = (data: {
+  deliveryCompany: string;
+  trackingNumber: string;
+  deliveryPin: string;
   orderNumber: string;
-  subtotal: string;
-  taxPercentage: number;
-  taxAmount: string;
-  shippingType: string;
-  shippingAmount: string;
-  orderTotal: string;
   currency: string;
   customerDetails: {
     email: string;
@@ -33,18 +30,8 @@ export const receiptTemplate = (data: {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your order is confirmed</title>
-    <!--[if mso]>
-    <noscript>
-        <xml>
-            <o:OfficeDocumentSettings>
-                <o:PixelsPerInch>96</o:PixelsPerInch>
-            </o:OfficeDocumentSettings>
-        </xml>
-    </noscript>
-    <![endif]-->
+    <title>Your order has been shipped!</title>
     <style>
-        /* Keep your original styles for Apple Mail and other clients */
         * {
             margin: 0;
             padding: 0;
@@ -69,7 +56,6 @@ export const receiptTemplate = (data: {
             overflow: hidden;
         }
 
-        /* Gmail fallback - solid background instead of image */
         .gmail-bg-fallback {
             background-color: rgba(255, 255, 255, 0.02);
         }
@@ -87,11 +73,11 @@ export const receiptTemplate = (data: {
             z-index: 1;
         }
 
-        /* Ensure all content stays above the background */
         .header,
+        .shipping-info,
+        .tracking-section,
         .order-summary,
         .items-section,
-        .pricing-section,
         .addresses-section,
         .cta-section {
             position: relative;
@@ -119,7 +105,115 @@ export const receiptTemplate = (data: {
             max-width: 480px;
             margin: 0 auto;
         }
+
+        .shipping-info {
+            padding: 32px 40px;
+            background: linear-gradient(135deg, rgba(0, 82, 53, 0.05) 0%, rgba(201, 0, 22, 0.05) 100%);
+            border-bottom: 1px solid #e8e8e8;
+        }
+
+        .shipping-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #005235;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .shipping-status {
+            font-size: 18px;
+            font-weight: 700;
+            color: #005235;
+            margin-bottom: 8px;
+        }
+
+        .shipping-description {
+            color: #666;
+            font-size: 15px;
+            line-height: 1.5;
+        }
         
+        .tracking-section {
+            padding: 32px 40px;
+            border-bottom: 1px solid #e8e8e8;
+            background: rgba(201, 0, 22, 0.02);
+        }
+
+        .tracking-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #C90016;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .tracking-card {
+            background: white;
+            border: 2px solid #e8e8e8;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        .tracking-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #005235;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+            margin-bottom: 16px;
+            padding: 12px;
+            background: rgba(0, 82, 53, 0.1);
+            border-radius: 8px;
+        }
+
+        .logistics-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .logistics-company {
+            color: #666;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .delivery-pin {
+            background: #C90016;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .track-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #005235 0%, #00693d 100%);
+            color: white;
+            padding: 14px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 16px;
+            transition: transform 0.2s ease;
+        }
+
+        .track-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 82, 53, 0.3);
+        }
+
         .order-summary {
             padding: 24px 40px;
             border-bottom: 1px solid #e8e8e8;
@@ -162,6 +256,7 @@ export const receiptTemplate = (data: {
             padding: 32px 40px;
             border-bottom: 1px solid #e8e8e8;
         }
+
         .items-title {
             font-size: 20px;
             font-weight: 700;
@@ -193,7 +288,7 @@ export const receiptTemplate = (data: {
             flex: 1;
         }
         
-        .item-name {
+        .responsive-item-name {
             font-weight: 700;
             color: #005235;
             font-size: 15px;
@@ -201,66 +296,26 @@ export const receiptTemplate = (data: {
             line-height: 1.4;
         }
         
-        .item-quantity {
+        .responsive-item-quantity {
             color: #666;
             font-size: 13px;
             margin-bottom: 4px;
             font-weight: 500;
         }
         
-        .item-variant {
+        .responsive-item-variant {
             color: #C90016;
             font-size: 13px;
             font-weight: 600;
             display: inline-block;
         }
         
-        .item-total {
+        .responsive-item-total {
             color: #005235;
             font-weight: 700;
             font-size: 16px;
             text-align: right;
             min-width: 120px;
-        }
-        
-        .pricing-section {
-            padding: 32px 40px;
-            border-bottom: 1px solid #e8e8e8;
-        }
-        
-        .pricing-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-            padding: 8px 0;
-            border-radius: 6px;
-        }
-        
-        .pricing-label {
-            color: #005235;
-            font-size: 15px;
-            font-weight: 600;
-        }
-        
-        .pricing-value {
-            color: #C90016;
-            font-size: 15px;
-            font-weight: 700;
-        }
-        
-        .total-row {
-            padding-top: 16px;
-            margin-top: 16px;
-            padding: 16px;
-            margin: 16px -16px 0;
-        }
-        
-        .total-row .pricing-label,
-        .total-row .pricing-value {
-            color: #333;
-            font-weight: 700;
-            font-size: 18px;
         }
         
         .addresses-section {
@@ -317,7 +372,6 @@ export const receiptTemplate = (data: {
             display: none !important;
         }
 
-        /* Force Gmail to respect flexbox fallbacks */
         .gmail-flex-fallback {
             display: table;
             width: 100%;
@@ -345,9 +399,10 @@ export const receiptTemplate = (data: {
             }
             
             .header,
+            .shipping-info,
+            .tracking-section,
             .order-summary,
             .items-section,
-            .pricing-section,
             .addresses-section,
             .cta-section {
                 padding-left: 24px;
@@ -377,10 +432,22 @@ export const receiptTemplate = (data: {
                 display: block;
             }
             
-            .item-total {
-                text-align: center;
+            .responsive-item-total {
+                text-align: center !important;
                 margin-top: 12px;
                 min-width: auto;
+            }
+
+            .responsive-item-name {
+                font-size: 14px;
+            }
+            
+            .responsive-item-quantity {
+                font-size: 12px;
+            }
+            
+            .responsive-item-variant {
+                font-size: 12px;
             }
             
             .header h1 {
@@ -395,16 +462,25 @@ export const receiptTemplate = (data: {
                 font-size: 18px;
             }
 
-            /* Force mobile pricing layout */
-            .pricing-row {
+            .tracking-number {
+                font-size: 20px;
+                letter-spacing: 1px;
+            }
+
+            .logistics-info {
                 display: block !important;
                 text-align: center;
             }
 
-            .pricing-label,
-            .pricing-value {
+            .logistics-company,
+            .delivery-pin {
                 display: block !important;
-                text-align: center !important;
+                margin-bottom: 12px;
+            }
+
+            .track-button {
+                font-size: 14px;
+                padding: 12px 24px;
             }
         }
         
@@ -420,34 +496,69 @@ export const receiptTemplate = (data: {
             .items-title {
                 font-size: 16px;
             }
-            
-            .pricing-row {
-                font-size: 14px;
+
+            .responsive-item-name {
+                font-size: 13px;
             }
             
-            .total-row .pricing-label,
-            .total-row .pricing-value {
-                font-size: 16px;
+            .responsive-item-quantity {
+                font-size: 11px;
+            }
+            
+            .responsive-item-variant {
+                font-size: 11px;
+            }
+
+            .responsive-item-total {
+                font-size: 14px;
+            }
+
+            .tracking-card {
+                padding: 16px;
+            }
+
+            .tracking-number {
+                font-size: 18px;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Gmail detection wrapper -->
     <div class="gmail-fix">
         <div class="email-container gmail-bg-fallback">
             <!-- Header -->
             <div class="header">
-                <h1>Thank you for ordering from IYLMIBS!</h1>
-                <p>Hey ${data.customerDetails.name}, your order is being processed and deliveries take within 1-3 weeks, You will be notified as soon as your order is shipped.</p>
+                <h1>Your order is on it's way!</h1>
+                <p>Hey ${data.customerDetails.name}, Your IYLMIBS order has been shipped. Track your package using the details below.</p>
             </div>
 
-            <!-- Order Summary with Gmail fallback -->
+            <!-- Shipping Status -->
+            <div class="shipping-info">
+                <div class="shipping-status">Package has been Shipped</div>
+                <div class="shipping-description">Thank you for your patience! Your order has been processed and is now with our delivery partner. Expected delivery within 1-4 business days.</div>
+            </div>
+
+            <!-- Tracking Information -->
+            <div class="tracking-section">
+                <div class="tracking-title">Track Your Package</div>
+                <div class="tracking-card">
+                    <div class="tracking-number">${data.deliveryPin}</div>
+                    
+                    <div class="logistics-info">
+                        <div class="logistics-company">📦 Delivered by: ${data.deliveryCompany}</div>
+                        <div class="delivery-pin">🔐 Delivery PIN: ${data.deliveryPin}</div>
+                    </div>
+
+                    <a href="https://giglogistics.com/track/${data.trackingNumber}" class="track-button">Track Your Package</a>
+                </div>
+            </div>
+
+            <!-- Order Summary -->
             <div class="order-summary">
                 <div class="order-header gmail-flex-fallback">
                     <div class="order-info">
                         <span class="order-label">Order number</span>
-                        <span class="order-number"># ${data.orderNumber}</span>
+                        <span class="order-number"> # ${data.orderNumber}</span>
                     </div>
                     <div class="logo-container">
                         <img src="https://res.cloudinary.com/dmkomqw3p/image/upload/v1749643809/1_demtho.png" alt="IYLMIBS Logo">
@@ -457,7 +568,8 @@ export const receiptTemplate = (data: {
 
             <!-- Items Section -->
             <div class="items-section">
-                <div class="items-title">Order summary (${data.items.length} ${data.items.length === 1 ? 'item' : 'items'})</div>
+                <div class="items-title">Items being shipped (${data.items.length} item${data.items.length === 1 ? '' : 's'})</div>
+
                 ${data.items
                   .map(
                     (item) => `
@@ -498,54 +610,8 @@ export const receiptTemplate = (data: {
                   .join('')}
             </div>
 
-            <!-- Pricing Section with Gmail-safe tables -->
-            <div class="pricing-section">
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width: 100%; border-collapse: collapse;">
-                    <tr>
-                        <td style="padding: 8px 0; border-bottom: 1px solid #f5f5f5;">
-                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width: 100%;">
-                                <tr>
-                                    <td style="color: #005235; font-size: 15px; font-weight: 600;">Subtotal</td>
-                                    <td style="color: #C90016; font-size: 15px; font-weight: 700; text-align: right;">${data.currency}${data.subtotal.toLocaleString()}</td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 8px 0; border-bottom: 1px solid #f5f5f5;">
-                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width: 100%;">
-                                <tr>
-                                    <td style="color: #005235; font-size: 15px; font-weight: 600;">Shipping (${data.shippingType})</td>
-                                    <td style="color: #C90016; font-size: 15px; font-weight: 700; text-align: right;">${data.currency}${data.shippingAmount.toLocaleString()}</td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 8px 0; border-bottom: 1px solid #f5f5f5;">
-                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width: 100%;">
-                                <tr>
-                                    <td style="color: #005235; font-size: 15px; font-weight: 600;">Tax (${data.taxPercentage}%)</td>
-                                    <td style="color: #C90016; font-size: 15px; font-weight: 700; text-align: right;">${data.currency}${data.taxAmount.toLocaleString()}</td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 16px 0; border-top: 2px solid #e8e8e8; border-radius: 8px;">
-                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width: 100%;">
-                                <tr>
-                                    <td style="color: #333; font-size: 18px; font-weight: 700; padding: 0 16px;">Total</td>
-                                    <td style="color: #333; font-size: 18px; font-weight: 700; text-align: right; padding: 0 16px;">${data.currency}${data.orderTotal.toLocaleString()}</td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-
-            <!-- Addresses Section -->
-            <div class="addresses-section">
+            <!-- Delivery Address -->
+             <div class="addresses-section">
                 <div class="address-block">
                     <div class="address-title">Shipping address</div>
                     <div class="address">
@@ -562,7 +628,7 @@ export const receiptTemplate = (data: {
             <!-- CTA Section -->
             <div class="cta-section">
                 <div class="help-text">
-                    If you have any questions, reply to this email or contact us at 
+                    Questions about your shipment? Contact us at 
                     <a href="mailto:ifyouleavemeillbescared@gmail.com">ifyouleavemeillbescared@gmail.com</a>
                 </div>
             </div>

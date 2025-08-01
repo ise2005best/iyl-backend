@@ -4,6 +4,7 @@ import { Resend } from 'resend';
 import { Order } from '../orders/entities/orders.entity';
 import { Repository } from 'typeorm';
 import { receiptTemplate } from '../orders/templates/customer-receipt';
+import { orderDelivered } from '../orders/templates/order-shipped';
 
 @Injectable()
 export class EmailService {
@@ -26,17 +27,14 @@ export class EmailService {
       throw new Error('Order not found');
     }
 
-    const addCommas = (num: number) =>
-      num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-
     const htmlContent = receiptTemplate({
       orderNumber: order.orderNumber,
-      subtotal: addCommas(order.subtotal),
+      subtotal: this.addCommas(order.subtotal),
       taxPercentage: order.taxPercentage,
-      taxAmount: addCommas(order.taxAmount),
+      taxAmount: this.addCommas(order.taxAmount),
       shippingType: order.shippingType,
-      shippingAmount: addCommas(order.shippingAmount),
-      orderTotal: addCommas(order.orderTotal),
+      shippingAmount: this.addCommas(order.shippingAmount),
+      orderTotal: this.addCommas(order.orderTotal),
       currency: order.currency,
       customerDetails: {
         email: order.customerDetails.email,
@@ -47,8 +45,8 @@ export class EmailService {
         productName: item.productName,
         variantName: item.variantName,
         quantity: item.quantity,
-        unitPrice: addCommas(item.unitPrice),
-        lineTotal: addCommas(item.lineTotal),
+        unitPrice: this.addCommas(item.unitPrice),
+        lineTotal: this.addCommas(item.lineTotal),
         image: item.image,
       })),
       shippingAddress: {
@@ -81,17 +79,14 @@ export class EmailService {
       throw new Error('Order not found');
     }
 
-    const addCommas = (num: number) =>
-      num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-
     const htmlContent = receiptTemplate({
       orderNumber: order.orderNumber,
-      subtotal: addCommas(order.subtotal),
+      subtotal: this.addCommas(order.subtotal),
       taxPercentage: order.taxPercentage,
-      taxAmount: addCommas(order.taxAmount),
+      taxAmount: this.addCommas(order.taxAmount),
       shippingType: order.shippingType,
-      shippingAmount: addCommas(order.shippingAmount),
-      orderTotal: addCommas(order.orderTotal),
+      shippingAmount: this.addCommas(order.shippingAmount),
+      orderTotal: this.addCommas(order.orderTotal),
       currency: order.currency,
       customerDetails: {
         email: order.customerDetails.email,
@@ -102,8 +97,8 @@ export class EmailService {
         productName: item.productName,
         variantName: item.variantName,
         quantity: item.quantity,
-        unitPrice: addCommas(item.unitPrice),
-        lineTotal: addCommas(item.lineTotal),
+        unitPrice: this.addCommas(item.unitPrice),
+        lineTotal: this.addCommas(item.lineTotal),
         image: item.image,
       })),
       shippingAddress: {
@@ -127,5 +122,43 @@ export class EmailService {
       subject: `New order from ${order.customerDetails.name}`,
       html: htmlContent,
     });
+  }
+
+  async orderDeliveredEmail(
+    orders: Order,
+    trackingNumber: string,
+    deliveryPin: string,
+    logisticsCompany: string,
+  ) {
+    const htmlContent = orderDelivered({
+      currency: orders?.currency,
+      orderNumber: orders?.orderNumber,
+      trackingNumber: trackingNumber,
+      shippingAddress: orders?.shippingDetails,
+      items: orders.productDetails.items.map((item) => ({
+        productName: item.productName,
+        variantName: item.variantName,
+        quantity: item.quantity,
+        unitPrice: this.addCommas(item.unitPrice),
+        lineTotal: this.addCommas(item.lineTotal),
+        image: item.image,
+      })),
+      deliveryCompany: logisticsCompany,
+      deliveryPin: deliveryPin,
+      customerDetails: orders?.customerDetails,
+    });
+
+    // send email to the customer
+    return await this.resend.emails.send({
+      from: 'IYLMIBS <no-reply@iylmibs.com>',
+      replyTo: 'ifyouleavemeillbescared@gmail.com',
+      to: [`${orders.customerDetails.email}`],
+      subject: `Your order has been shipped!`,
+      html: htmlContent,
+    });
+  }
+
+  private addCommas(num: number) {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   }
 }

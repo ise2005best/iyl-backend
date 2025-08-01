@@ -96,3 +96,30 @@ export class VerifyPaymentDto {
   @IsNotEmpty()
   tx_ref: string;
 }
+
+export class UpdateOrderDto {
+  @ApiProperty({
+    description: 'Order Id from orders table',
+    type: 'string',
+    example: '23',
+  })
+  orderId: string;
+  @ApiProperty({
+    description: 'Tracking Number or Waybill Number from delivery company',
+    type: 'string',
+    example: '1128489392',
+  })
+  trackingNumber: string;
+  @ApiProperty({
+    description: 'Delivery Pin or Waybill Pin from delivery company',
+    type: 'string',
+    enumName: 'H9duH293',
+  })
+  deliveryPin?: string;
+  @ApiProperty({
+    description: 'Name of Logistics Company',
+    type: 'string',
+    example: 'GIG logistics company',
+  })
+  logisticsCompany: string;
+}

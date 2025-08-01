@@ -1,6 +1,10 @@
 import { Controller, Post, Body } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
-import { CreatePaymentDto, VerifyPaymentDto } from './dtos/create-payment.dto';
+import {
+  CreatePaymentDto,
+  UpdateOrderDto,
+  VerifyPaymentDto,
+} from './dtos/create-payment.dto';
 
 @Controller('payments')
 export class PaymentsController {
@@ -13,5 +17,10 @@ export class PaymentsController {
   @Post('verify')
   async verifyPayment(@Body() verifyPaymentDto: VerifyPaymentDto) {
     return this.paymentsService.verifyPayment(verifyPaymentDto);
+  }
+
+  @Post('ship-order')
+  async shipOrder(@Body() dto: UpdateOrderDto) {
+    return this.paymentsService.updateOrderWithTrackingNumber(dto);
   }
 }
